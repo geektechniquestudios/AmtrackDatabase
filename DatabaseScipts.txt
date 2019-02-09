@@ -1,0 +1,301 @@
+--Created by Terry Dorsey
+--This is a transact-sql creation script for a normalized database intended to emulate the service end of the Amtrack website. The database is called All_Aboard
+
+
+--create the database
+
+CREATE DATABASE All_Aboard;
+
+--create tables relationships
+
+USE All_Aboard;
+
+GO
+
+CREATE TABLE Customers
+ (
+	CustID int IDENTITY(1,1) PRIMARY KEY not null,
+	CustLastName varchar(255) not null,
+	CustFirstName varchar(255) not null,
+	CustPhone char(10) null, 
+	CustAddress varchar(255) not null,
+	CustCity varchar(255) not null,
+	CustState char(2) not null,
+	CustZip char(5) not null, 
+);
+
+GO
+
+CREATE TABLE Orders--depends on 'Customers' table
+(
+	OrderID int IDENTITY(1,1) PRIMARY KEY not null,
+	CustID int not null
+		FOREIGN KEY REFERENCES
+		Customers (CustID)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE,
+	DateOfOrder datetime not null,
+	CostOfOrder numeric(19,2) not null, 
+);
+
+GO
+
+CREATE TABLE Passengers
+(
+	PassengerID int IDENTITY (1,1) PRIMARY KEY not null,
+	PassengerName varchar(255) not null,
+	PassengerAddress varchar(255) not null,
+	PassengerDOB date not null,
+	PassengerCity varchar(255) not null,
+	PassengerState char(2) not null,
+	PassengerZip char(5) not null,
+	PassengerPhone char(10) null,
+);
+
+GO
+
+--trips and passengers MUST come before Tickets and OrderTicket
+--because they have key dependencies 
+CREATE TABLE Trips
+(
+	SpecificTripID int IDENTITY (1,1) PRIMARY KEY not null,
+	StartLocation varchar(255) not null,
+	EndLocation varchar(255) not null,
+	CostOfTrip numeric(19,2) not null,
+	DateOfTrip datetime not null
+);
+
+GO
+
+CREATE TABLE Tickets--depends on Trips and Passengers
+(
+	TicketID int IDENTITY(1,1) not null PRIMARY KEY,
+	SpecificTripID int not null
+		FOREIGN KEY REFERENCES 
+		Trips (SpecificTripID)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE,
+	PassengerID int not null
+		FOREIGN KEY REFERENCES
+		Passengers (PassengerID)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE,
+);
+
+GO
+
+CREATE TABLE OrderTicket--depends on Tickets and Orders
+(
+	TicketID int not null
+		FOREIGN KEY REFERENCES 
+		Tickets (TicketID)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE,
+	OrderID int not null
+		FOREIGN KEY REFERENCES
+		Orders (OrderID)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE,
+	NumOfTickets int not null,
+	CostOfTrip numeric(19,2) not null,
+
+	PRIMARY KEY(TicketID, OrderID)
+);
+
+GO
+
+--Customers Insertion Script
+
+USE Allaboard;
+GO
+
+INSERT INTO Customers
+(
+	CustLastName,
+	CustFirstName,
+	CustPhone,
+	CustAddress,
+	CustCity,
+	CustState,
+	CustZip
+)
+VALUES
+(
+	'Sparks',
+	'Billy',
+	'1111111100',
+	'120 someStreet St',
+	'someCity',
+	'Ga',
+	'30222'
+)
+;
+
+GO
+
+--Trips Insertion Script
+
+USE All_Aboard;
+GO
+
+INSERT INTO Trips
+(
+	StartLocation,
+	EndLocation,
+	CostOfTrip,
+	DateOfTrip
+)
+VALUES
+(
+	'Atlanta',
+	'McDonough',
+	80.00,
+	'20181212 4:30 AM'
+)
+;
+
+GO
+
+--Passenger Insertion Script
+
+USE All_Aboard;
+GO
+
+INSERT INTO Passengers
+(
+	PassengerLastName,
+	PassengerFirstName,
+	PassengerAddress,
+	PassengerDOB,
+	PassengerCity,
+	PassengerState,
+	PassengerZip,
+	PassengerPhone
+)
+VALUES
+(
+	'Sparks',
+	'Jason',
+	'33 SomeStreet st',
+	'20040822',
+	'Griffin',
+	'Ga',
+	'30224',
+	'2222222222')
+;
+
+GO
+
+--Orders Insertion Script
+
+USE All_Aboard;
+GO
+
+INSERT INTO Orders
+(
+	CustID,
+	DateOfOrder,
+	CostOfOrder
+)
+VALUES
+(
+	1,
+	'20181202',
+	100.00
+)
+;
+
+GO
+
+--Tickets Insertion Script
+
+USE All_Aboard;
+GO
+
+INSERT INTO Tickets
+(
+	SpecificTripID,
+	PassengerID
+)
+VALUES
+(
+	1,
+	1
+)
+;
+
+GO
+
+--Orders Insertion Script
+
+Use All_Aboard;
+GO
+
+INSERT INTO Orders
+(
+	CustID,
+	DateOfOrder,
+	CostOfOrder
+)
+VAlUES
+(
+	1,
+	'20121202',
+	140.00
+);
+
+GO
+
+--OrderTicket Insertion Script
+
+Use All_Aboard;
+GO
+
+INSERT INTO OrderTicket
+(
+	TicketID,
+	OrderID,
+	NumOfTickets,
+	CostOfTrip
+)
+VAlUES
+(
+	1,
+	2,
+	2,
+	140.00
+);
+
+GO
+
+--View for which passengers are on each train
+
+CREATE VIEW PassengersOnTrain AS
+
+SELECT Passengers.PassengerName, Trips.SpecificTripID
+	FROM Tickets
+	FULL JOIN Passengers
+	ON Tickets.PassengerID = Passenger.PassengerID
+	LEFT JOIN Trips
+	ON Trips.SpecificTripID = Tickets.SpecificTripID
+	;
+	--Trips.SpecificID is the train you want to look at
+
+--View for all available trips
+
+CREATE VIEW AllAvailableTrips AS
+
+SELECT Trips. StartLocation, Trips.EndLocation, Trips.SpecificTripID
+FROM Trips;
+
+--View for passenger ticket information
+
+CREATE VIEW PassengerTicket AS
+
+SELECT Passengers.PassengerName, Trips.SpecificTripID, Trips.CostOfTrip, Trips.StartLocation, Trips.EndLocation
+	FROM Tickets
+	FULL JOIN Passengers
+	ON Tickets.PassengerID = Passengers.PassengerID
+	LEFT JOIN Trips 
+	ON Trips.SpecificTripID = Tickets.SpecificTripID
+	;
