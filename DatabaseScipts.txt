@@ -1,5 +1,5 @@
 --Created by Terry Dorsey
---This is a transact-sql creation script for a normalized database intended to emulate the service end of the Amtrack website. The database is called All_Aboard
+--This is a transact-sql creation script designed in SSMS for a normalized database intended to emulate the service end of the Amtrack website. The database is called All_Aboard
 
 
 --create the database
