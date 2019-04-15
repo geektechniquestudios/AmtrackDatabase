@@ -1,2 +1,2 @@
 # AmtrackDatabase
-A reverse engineered 3nf database creation script designed to reverse engineer Amtrack's customer facing database 
+This repo just contains creation and insertion scripts as well as images to represent the database structure.
