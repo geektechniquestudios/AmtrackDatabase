@@ -1,4 +1,4 @@
 # AmtrackDatabase
-This repo just contains creation and insertion scripts as well as images to represent the database structure.
+This repo contains creation and insertion scripts as well as images to represent the database structure.
 
 ![](DatabaseUML.png)
